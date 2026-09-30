@@ -10,7 +10,7 @@ import mimetypes
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from google.genai import Client, interactions
+from google.genai import Client
 from google.genai.errors import APIError, ClientError
 from google.genai.types import (
     AutomaticFunctionCallingConfig,
@@ -70,14 +70,6 @@ from .const import (
     TIMEOUT_MILLIS,
 )
 from .helpers import ContentDetails, PartDetails
-from .interactions import (
-    async_prepare_chat_log_attachments,
-    build_interaction_request,
-    convert_chat_log_to_interactions_steps,
-    format_response_format,
-    format_tools_for_interactions,
-    transform_interactions_stream,
-)
 
 if TYPE_CHECKING:
     from . import GoogleGenerativeAIConfigEntry
@@ -731,6 +723,17 @@ class GoogleGenerativeAILLMBaseEntity(Entity):
         max_iterations: int = MAX_TOOL_ITERATIONS,
     ) -> None:
         """Generate an answer for the chat log using the Interactions API."""
+        from google.genai import interactions  # noqa: PLC0415
+
+        from .interactions import (  # noqa: PLC0415
+            async_prepare_chat_log_attachments,
+            build_interaction_request,
+            convert_chat_log_to_interactions_steps,
+            format_response_format,
+            format_tools_for_interactions,
+            transform_interactions_stream,
+        )
+
         options = self.subentry.data
         model_name = options.get(CONF_CHAT_MODEL, self.default_model)
         supports_system_instruction = (

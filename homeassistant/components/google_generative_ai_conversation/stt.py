@@ -3,7 +3,6 @@
 from collections.abc import AsyncIterable
 from typing import Any, override
 
-from google.genai import interactions
 from google.genai.errors import APIError, ClientError
 from google.genai.types import Part
 
@@ -22,7 +21,6 @@ from .const import (
 )
 from .entity import GoogleGenerativeAILLMBaseEntity
 from .helpers import convert_to_wav
-from .interactions import build_interaction_request, format_audio_content
 
 
 async def async_setup_entry(
@@ -266,6 +264,13 @@ class GoogleGenerativeAISttEntity(
         self, metadata: stt.SpeechMetadata, prompt: str, audio_data: bytes
     ) -> stt.SpeechResult:
         """Process an audio stream using the Gemini Interactions API."""
+        from google.genai import interactions  # noqa: PLC0415
+
+        from .interactions import (  # noqa: PLC0415
+            build_interaction_request,
+            format_audio_content,
+        )
+
         model = self.subentry.data.get(CONF_CHAT_MODEL, RECOMMENDED_STT_MODEL)
         audio_part = format_audio_content(
             data=audio_data,

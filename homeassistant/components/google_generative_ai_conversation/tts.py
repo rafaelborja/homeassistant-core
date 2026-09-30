@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 from typing import Any, override
 
-from google.genai import interactions, types
+from google.genai import types
 from google.genai.errors import APIError, ClientError
 from propcache.api import cached_property
 
@@ -28,11 +28,6 @@ from .const import (
 )
 from .entity import GoogleGenerativeAILLMBaseEntity
 from .helpers import convert_to_wav
-from .interactions import (
-    build_interaction_request,
-    extract_output_audio,
-    format_audio_response_format,
-)
 
 
 async def async_setup_entry(
@@ -214,6 +209,14 @@ class GoogleGenerativeAITextToSpeechEntity(
         self, message: str, options: dict[str, Any]
     ) -> TtsAudioType:
         """Load tts audio using the Gemini Interactions API."""
+        from google.genai import interactions  # noqa: PLC0415
+
+        from .interactions import (  # noqa: PLC0415
+            build_interaction_request,
+            extract_output_audio,
+            format_audio_response_format,
+        )
+
         model = self.subentry.data.get(CONF_CHAT_MODEL, RECOMMENDED_TTS_MODEL)
         voice = options.get(ATTR_VOICE, self._supported_voices[0].voice_id)
         request = build_interaction_request(

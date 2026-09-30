@@ -73,7 +73,6 @@ from .const import (
     RECOMMENDED_USE_INTERACTIONS_API,
     TIMEOUT_MILLIS,
 )
-from .helpers import warmup_gaos
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,11 +84,8 @@ STEP_API_DATA_SCHEMA = probatio.Schema(
 
 
 def _create_client(api_key: str) -> genai.Client:
-    """Create a Google GenAI Client and warm up lazy modules in the executor."""
-    warmup_gaos()
-    client = genai.Client(api_key=api_key)
-    warmup_gaos(client)
-    return client
+    """Create a Google GenAI Client in the executor."""
+    return genai.Client(api_key=api_key)
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:

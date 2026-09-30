@@ -3,7 +3,6 @@
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, override
 
-from google.genai import interactions
 from google.genai.errors import APIError, ClientError
 from google.genai.types import GenerateContentConfig, Part, PartUnionDict
 
@@ -26,13 +25,6 @@ from .entity import (
     ERROR_GETTING_RESPONSE,
     GoogleGenerativeAILLMBaseEntity,
     async_prepare_files_for_prompt,
-)
-from .interactions import (
-    async_prepare_chat_log_attachments,
-    build_interaction_request,
-    convert_chat_log_to_interactions_steps,
-    extract_output_image,
-    format_image_response_format,
 )
 
 if TYPE_CHECKING:
@@ -149,6 +141,16 @@ class GoogleGenerativeAITaskEntity(
         chat_log: conversation.ChatLog,
     ) -> ai_task.GenImageTaskResult:
         """Generate an image using the Interactions API."""
+        from google.genai import interactions  # noqa: PLC0415
+
+        from .interactions import (  # noqa: PLC0415
+            async_prepare_chat_log_attachments,
+            build_interaction_request,
+            convert_chat_log_to_interactions_steps,
+            extract_output_image,
+            format_image_response_format,
+        )
+
         prepared_attachments = await async_prepare_chat_log_attachments(
             self.hass, chat_log
         )

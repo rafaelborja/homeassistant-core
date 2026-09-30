@@ -9,6 +9,7 @@ from requests.exceptions import Timeout
 from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.google_generative_ai_conversation.const import (
+    CONF_USE_INTERACTIONS_API,
     DEFAULT_AI_TASK_NAME,
     DEFAULT_CONVERSATION_NAME,
     DEFAULT_STT_NAME,
@@ -67,6 +68,30 @@ async def test_config_entry_error(
         await hass.async_block_till_done()
         assert mock_config_entry.state == state
         assert any(mock_config_entry.async_get_active_flows(hass, {"reauth"})) == reauth
+
+
+async def test_interactions_warmup_follows_option(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
+    """Test the Interactions API is only warmed up when the option is enabled."""
+    with (
+        patch("google.genai.models.AsyncModels.get"),
+        patch(
+            "homeassistant.components.google_generative_ai_conversation.warmup_gaos"
+        ) as mock_warmup,
+    ):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        assert mock_config_entry.state is ConfigEntryState.LOADED
+        mock_warmup.assert_not_called()
+
+        # Enabling the option reloads the entry, which warms up in the executor
+        hass.config_entries.async_update_entry(
+            mock_config_entry, options={CONF_USE_INTERACTIONS_API: True}
+        )
+        await hass.async_block_till_done()
+        assert mock_config_entry.state is ConfigEntryState.LOADED
+        mock_warmup.assert_called_once()
 
 
 async def test_migration_from_v1(

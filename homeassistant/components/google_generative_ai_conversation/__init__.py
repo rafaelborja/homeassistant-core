@@ -22,6 +22,7 @@ from homeassistant.helpers import (
 from homeassistant.helpers.typing import UNDEFINED, ConfigType, UndefinedType
 
 from .const import (
+    CONF_USE_INTERACTIONS_API,
     DEFAULT_AI_TASK_NAME,
     DEFAULT_STT_NAME,
     DEFAULT_TITLE,
@@ -47,18 +48,19 @@ PLATFORMS = (
 type GoogleGenerativeAIConfigEntry = ConfigEntry[Client]
 
 
-def _create_client(api_key: str) -> Client:
-    """Create a Google GenAI Client and warm up lazy modules in the executor."""
-    warmup_gaos()
+def _create_client(api_key: str, use_interactions_api: bool = False) -> Client:
+    """Create a Google GenAI Client, warming up the Interactions API if used."""
     client = Client(api_key=api_key)
-    warmup_gaos(client)
+    if use_interactions_api:
+        warmup_gaos(client)
+        # Import the Interactions helpers here, in the executor, not on the event loop
+        from . import interactions  # noqa: F401, PLC0415
     return client
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up Google Generative AI Conversation."""
 
-    await hass.async_add_executor_job(warmup_gaos)
     await async_migrate_integration(hass)
 
     return True
@@ -71,7 +73,9 @@ async def async_setup_entry(
 
     try:
         client = await hass.async_add_executor_job(
-            _create_client, entry.data[CONF_API_KEY]
+            _create_client,
+            entry.data[CONF_API_KEY],
+            entry.options.get(CONF_USE_INTERACTIONS_API, False),
         )
         await client.aio.models.get(
             model=RECOMMENDED_CHAT_MODEL,
